@@ -323,3 +323,37 @@ export function toCalendarBooking(b: BookingVM): CalendarBooking {
     country: b.country,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Exhibitor "Titles" page
+// ---------------------------------------------------------------------------
+
+/** What an exhibitor has said about one title in one base format. A booking
+ * or request always wins over a "not showing" pass. */
+export type FormatAnswer =
+  | { kind: "booked"; date: string; status: "requested" | "confirmed" }
+  | { kind: "not_showing" }
+  | { kind: "none" };
+
+/** Trailers available for one title in one base format. */
+export type TitleTrailers = {
+  format: BaseFormat;
+  /** Display codes taken from the version strings, e.g. ["E", "F"]. */
+  codes: string[];
+  /** Every asset for this title and format, so the Order popup can list them. */
+  assets: { id: number; version: string | null; ready: boolean; requested: boolean }[];
+  /** True if at least one asset is marked ready for distribution. */
+  ready: boolean;
+};
+
+export type ExhibitorTitle = {
+  titleNo: string;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  formats: BaseFormat[];
+  answers: Record<string, FormatAnswer>;
+  trailers: TitleTrailers[];
+  /** Hollywood/Local etc. from the lineup notes, used for the regional toggle. */
+  titleType: string | null;
+};

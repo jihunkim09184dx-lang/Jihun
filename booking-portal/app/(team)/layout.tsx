@@ -24,7 +24,7 @@ export default async function TeamLayout({
 }) {
   const { supabase, user, profile } = await requireProfile();
   // The team portal is team-only; exhibitors have their own shell.
-  if (profile.role !== "team") redirect("/dashboard");
+  if (profile.role !== "team") redirect("/titles");
 
   const [cookieStore, exhibitors] = await Promise.all([cookies(), getExhibitors(supabase)]);
   const managers = managersFrom(exhibitors);

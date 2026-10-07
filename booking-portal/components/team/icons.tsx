@@ -6,6 +6,7 @@ import {
   FileSignature,
   Home,
   Inbox,
+  ListChecks,
   Lightbulb,
   MonitorPlay,
   Video,
@@ -14,6 +15,7 @@ import {
 /** One icon per team sidebar nav item, keyed by a stable nav key. */
 export const NAV_ICONS = {
   home: Home,
+  responses: ListChecks,
   calendar: CalendarDays,
   requests: Inbox,
   "production-requests": Clapperboard,

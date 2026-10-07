@@ -33,7 +33,7 @@ export async function login(
     .eq("id", data.user.id)
     .single();
 
-  redirect(profile?.role === "team" ? "/home" : "/dashboard");
+  redirect(profile?.role === "team" ? "/home" : "/titles");
 }
 
 export async function logout() {

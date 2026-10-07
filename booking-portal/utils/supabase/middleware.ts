@@ -58,6 +58,7 @@ export async function updateSession(request: NextRequest) {
   const TEAM_PREFIXES = [
     "/home",
     "/calendar",
+    "/lineup",
     "/requests",
     "/production-requests",
     "/trailer-requests",
@@ -71,7 +72,7 @@ export async function updateSession(request: NextRequest) {
       .single();
     if (profile?.role !== "team") {
       const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
+      url.pathname = "/titles";
       url.search = "";
       return NextResponse.redirect(url);
     }

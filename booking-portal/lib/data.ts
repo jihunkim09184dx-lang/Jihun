@@ -9,6 +9,7 @@ import type {
   Contact,
   DashboardTitle,
   Exhibitor,
+  ExhibitorTitle,
   LineupCatalogueItem,
   LineupWithTitle,
   Profile,
@@ -21,7 +22,8 @@ import type {
   TrailerRequestVM,
   TrailerRequestWithAsset,
 } from "@/lib/types";
-import { screenLabel, titleDisplayName, todayIso } from "@/lib/display";
+import { baseFormat } from "@/lib/types";
+import { deriveTitleType, screenLabel, titleDisplayName, todayIso } from "@/lib/display";
 import { isExternalPoster, posterSrc, resolvePosterPath } from "@/lib/posters";
 
 export async function getSupabase() {
@@ -55,7 +57,7 @@ export async function requireProfile() {
 export async function requireTeam() {
   const ctx = await requireProfile();
   // /requests is team chrome now - exhibitors belong in their own portal.
-  if (ctx.profile.role !== "team") redirect("/dashboard");
+  if (ctx.profile.role !== "team") redirect("/titles");
   return ctx;
 }
 
@@ -613,4 +615,119 @@ export async function getPendingTrailerRequestCount(
   if (exhibitorIds) query = query.in("exhibitor_unique", exhibitorIds);
   const { count } = await query;
   return count ?? 0;
+}
+
+/** Exhibitor: titles this exhibitor has marked "not showing", per format. */
+export async function getMyTitleResponses(
+  supabase: SupabaseClient
+): Promise<{ title_no: string; format: string }[]> {
+  const { data, error } = await supabase.from("title_responses").select("title_no, format");
+  if (error) throw new Error(`Failed to load title responses: ${error.message}`);
+  return (data ?? []) as { title_no: string; format: string }[];
+}
+
+/** Version strings are "/"-separated reel codes ("E/F", "5/J/E"). Show them
+ * as short upper-case chips; anything odd is kept as typed. */
+function trailerCodes(version: string | null): string[] {
+  return (version ?? "")
+    .split("/")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((t) => t.toUpperCase());
+}
+
+/**
+ * Everything the exhibitor Titles page needs: upcoming confirmed titles
+ * (one entry per film), the exhibitor's answer per format (booked, not
+ * showing, or none yet) and the trailers on offer per format.
+ */
+export async function getExhibitorTitles(
+  supabase: SupabaseClient,
+  formats: string[],
+  hasUltra: boolean
+): Promise<ExhibitorTitle[]> {
+  const [lineup, bookings, responses, assets, myRequests] = await Promise.all([
+    getUpcomingTitles(supabase, formats, 200),
+    getBookingVMs(supabase),
+    getMyTitleResponses(supabase),
+    getTrailerAssets(supabase, { formats, hasUltra }),
+    getMyTrailerRequests(supabase),
+  ]);
+
+  const requestedAssetIds = new Set(
+    myRequests.filter((r) => r.status !== "declined").map((r) => r.trailer_asset_id)
+  );
+  const passed = new Set(responses.map((r) => `${r.title_no}|${r.format}`));
+
+  // Earliest live booking per title + base format.
+  const booked = new Map<string, { date: string; status: "requested" | "confirmed" }>();
+  for (const b of bookings) {
+    if (!b.titleNo || (b.status !== "requested" && b.status !== "confirmed")) continue;
+    const key = `${b.titleNo}|${baseFormat(b.format)}`;
+    const cur = booked.get(key);
+    if (!cur || b.date < cur.date) booked.set(key, { date: b.date, status: b.status });
+  }
+
+  const map = new Map<string, ExhibitorTitle>();
+  for (const t of lineup) {
+    const fmt = baseFormat(t.format);
+    let card = map.get(t.title_no);
+    if (!card) {
+      card = {
+        titleNo: t.title_no,
+        name: titleDisplayName(t.title?.film_imdb_db ?? null, t.title?.erp_title, t.title_no),
+        posterUrl: t.posterUrl,
+        releaseDate: t.first_available_release_date,
+        formats: [],
+        answers: {},
+        trailers: [],
+        titleType: deriveTitleType(t.notes),
+      };
+      map.set(t.title_no, card);
+    }
+    if (!card.posterUrl && t.posterUrl) card.posterUrl = t.posterUrl;
+    if (
+      t.first_available_release_date &&
+      (!card.releaseDate || t.first_available_release_date < card.releaseDate)
+    ) {
+      card.releaseDate = t.first_available_release_date;
+    }
+    if (card.formats.includes(fmt)) continue;
+    card.formats.push(fmt);
+    const b = booked.get(`${t.title_no}|${fmt}`);
+    card.answers[fmt] = b
+      ? { kind: "booked", date: b.date, status: b.status }
+      : passed.has(`${t.title_no}|${fmt}`)
+        ? { kind: "not_showing" }
+        : { kind: "none" };
+  }
+
+  // Trailers hang off trailer_assets.title_no; ULTRA assets play on either format.
+  for (const card of map.values()) {
+    card.formats.sort();
+    for (const fmt of card.formats) {
+      const code = fmt === "4DX" ? "4DX" : "SX";
+      const own = assets.filter(
+        (a) => a.title_no === card.titleNo && (a.format === code || a.format === "ULTRA")
+      );
+      if (own.length === 0) continue;
+      const codes: string[] = [];
+      for (const a of own) for (const c of trailerCodes(a.version)) if (!codes.includes(c)) codes.push(c);
+      card.trailers.push({
+        format: fmt,
+        codes,
+        assets: own.map((a) => ({
+          id: a.id,
+          version: a.version,
+          ready: a.included,
+          requested: requestedAssetIds.has(a.id),
+        })),
+        ready: own.some((a) => a.included),
+      });
+    }
+  }
+
+  return [...map.values()].sort((a, b) =>
+    (a.releaseDate ?? "9999").localeCompare(b.releaseDate ?? "9999") || a.name.localeCompare(b.name)
+  );
 }

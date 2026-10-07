@@ -9,6 +9,7 @@ import type { TrailerRequestStatus } from "@/lib/types";
 
 function revalidateTrailerRequestViews() {
   revalidatePath("/lineup-trailers");
+  revalidatePath("/titles");
   revalidatePath("/bookings");
   revalidatePath("/trailer-requests");
 }

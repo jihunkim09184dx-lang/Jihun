@@ -9,15 +9,10 @@ import { NAV_ICONS, type NavKey } from "@/components/exhibitor/icons";
 import type { FormatMix } from "@/lib/theme";
 
 const NAV: { href: string; key: NavKey; label: string }[] = [
-  { href: "/dashboard", key: "dashboard", label: "Dashboard" },
-  { href: "/lineup-trailers", key: "lineup-trailers", label: "Lineup & Trailers" },
+  { href: "/titles", key: "titles", label: "Titles" },
   { href: "/bookings", key: "bookings", label: "Bookings" },
   { href: "/title-requests", key: "title-requests", label: "Title Requests" },
-  { href: "/performance", key: "performance", label: "Performance" },
   { href: "/marketing-assets", key: "marketing-assets", label: "Marketing Assets" },
-  { href: "/correspondence", key: "correspondence", label: "Correspondence" },
-  { href: "/users", key: "users", label: "My Users" },
-  { href: "/settings", key: "settings", label: "Settings" },
 ];
 
 export function ExhibitorShell({

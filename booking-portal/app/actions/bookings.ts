@@ -17,6 +17,7 @@ function revalidateBookingViews() {
   revalidatePath("/calendar");
   revalidatePath("/requests");
   revalidatePath("/dashboard");
+  revalidatePath("/titles");
   revalidatePath("/bookings");
 }
 

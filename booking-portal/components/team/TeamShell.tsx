@@ -36,6 +36,7 @@ export function TeamShell({
     { href: "/home", key: "home", label: "Home" },
     { href: "/requests", key: "requests", label: "Requests", badge: pendingCount },
     { href: "/calendar", key: "calendar", label: "Calendar" },
+    { href: "/lineup", key: "responses", label: "Title answers" },
     {
       href: "/production-requests",
       key: "production-requests",
