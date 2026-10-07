@@ -10,6 +10,8 @@ import type { FormatMix } from "@/lib/theme";
 
 const NAV: { href: string; key: NavKey; label: string }[] = [
   { href: "/titles", key: "titles", label: "Titles" },
+  { href: "/dashboard", key: "dashboard", label: "Dashboard" },
+  { href: "/lineup-trailers", key: "lineup-trailers", label: "Lineup & Trailers" },
   { href: "/bookings", key: "bookings", label: "Bookings" },
   { href: "/title-requests", key: "title-requests", label: "Title Requests" },
   { href: "/marketing-assets", key: "marketing-assets", label: "Marketing Assets" },

@@ -1,8 +1,10 @@
-import { Home, Image as ImageIcon, MessageCircle, PenLine } from "lucide-react";
+import { FileText, Home, Image as ImageIcon, LayoutGrid, MessageCircle, PenLine } from "lucide-react";
 
 /** One icon per exhibitor sidebar nav item, keyed by route segment. */
 export const NAV_ICONS = {
-  titles: Home,
+  titles: LayoutGrid,
+  dashboard: Home,
+  "lineup-trailers": FileText,
   bookings: PenLine,
   "title-requests": MessageCircle,
   "marketing-assets": ImageIcon,
